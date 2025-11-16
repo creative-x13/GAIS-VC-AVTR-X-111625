@@ -1,0 +1,9 @@
+{
+  "name": "Copy of GAIS-GEM-VC-READY-BOLT-111625-D",
+  "description": "Visualize your dream kitchen or bathroom with a live AI design consultant.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
