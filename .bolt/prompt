@@ -1,0 +1,323 @@
+# SYSTEM INSTRUCTIONS FOR BOLT
+## Live Avatar Pro Project Knowledge Base
+
+---
+
+## YOUR ROLE
+
+You are implementing a working SaaS platform on the Bolt.new platform. This is a **speed-to-market build**, not a perfect production system. Focus on **functional and good enough**, not perfect.
+
+---
+
+## CRITICAL RULES
+
+### 1. PHASED APPROACH IS MANDATORY
+- Complete Phase N before starting Phase N+1
+- Do not skip phases
+- Do not implement features out of order
+- Request approval before proceeding to next phase
+
+### 2. PLATFORM CONSTRAINTS
+- **Use Bolt Database** for all data storage
+- **Use Bolt Auth** for authentication
+- **Use Bolt Storage** for file uploads
+- **Use Bolt API Routes** for backend logic
+- **Do NOT mention Vercel, Railway, or other platforms**
+- Everything must work on Bolt.new
+
+### 3. PRESERVE EXISTING ARCHITECTURE
+- Service interfaces are already defined - implement them exactly
+- UI components are already built - don't change them
+- Mock services exist - replace with production implementations
+- Component architecture is proven - maintain it
+
+### 4. KEEP IT SIMPLE
+- Build essentials first
+- Skip advanced features for now
+- "Good enough" is acceptable
+- We can iterate later
+- Don't over-engineer
+
+### 5. SECURITY ESSENTIALS
+- Never expose API keys in client code
+- Use backend routes to proxy external APIs
+- Implement Bolt Database RLS policies
+- Validate all user inputs
+- Use HTTPS (automatic on Bolt)
+
+---
+
+## PROJECT CONTEXT
+
+**What Exists**:
+- 7 fully functional agent personas
+- Complete UI components
+- Service interfaces defined
+- Mock services working
+- Architecture proven in Google AI Studio
+
+**What to Build**:
+- Production implementations of 7 service interfaces
+- Backend API routes
+- Database schema
+- External API integrations
+- Widget embedding system
+
+**Configuration Source of Truth**:
+- `src/config/remodelingLiveConfig.ts` - All AI behavior, tools, prompts
+- This file defines the 7 personas - reference it, don't guess
+
+---
+
+## THE SEVEN PERSONAS
+
+1. **remodeling_consultant** - Visual remodeling with image generation
+2. **water_damage_restoration** - 3-phase workflow (Analysis → Cleanup → Remodel)
+3. **contractor_agent** - 35 trades, safety-first, photo diagnosis
+4. **live_voice_agent** - General support with knowledge base
+5. **sales_agent** - 13 sales styles, lead generation
+6. **ppc_agent** - 25 verticals, drive phone calls
+7. **customizable_ppc_agent** - AI-generated instructions
+
+**Reference**: See PRD for full details on each persona
+
+---
+
+## SERVICE INTERFACES TO IMPLEMENT
+
+### VoiceService
+- Gemini Live API integration
+- Real-time audio streaming
+- Image generation
+- Function calling
+- **Key**: Backend proxy required for API key security
+
+### AvatarService
+- LiveAvatar.com CUSTOM mode
+- Session management
+- WebSocket audio routing
+- LiveKit video display
+- **Key**: Reference success documentation for exact patterns
+
+### CreditService
+- Bolt Database backend
+- Real-time balance subscriptions
+- Atomic transactions
+- Usage tracking
+- **Key**: Must be accurate to the penny
+
+### MemoryService
+- Session persistence
+- Conversation history
+- **Key**: Keep it simple, basic storage only
+
+### AgentService
+- Configuration save/load
+- Knowledge base generation (optional, can defer)
+- **Key**: Start with basic config, expand later
+
+### IntegrationService
+- Webhook management (optional)
+- **Key**: Can defer if time constrained
+
+### EmailService
+- Resend integration
+- Basic templates
+- **Key**: Essential templates only
+
+---
+
+## EXTERNAL API PATTERNS
+
+### Gemini Live API
+- Model: `gemini-2.5-flash-native-audio-preview-09-2025`
+- Audio: 16kHz input, 24kHz output, PCM, base64 encoded
+- **MUST**: Use backend proxy route `/api/gemini/connect`
+- **NEVER**: Call from client with exposed API key
+
+### LiveAvatar API
+- Mode: **CUSTOM** (not BASIC, TTS, AUTO)
+- Auth: Token creation uses `X-API-KEY` header
+- Start: Uses `Authorization: Bearer` header
+- WebSocket: Send token as raw string, NOT JSON
+- Audio: `agent.speak` event with base64 PCM
+- **CRITICAL**: Reference "BOLT CRITICAL SUCCESS SETTINGS REPORT 111225-A" for exact patterns
+
+### Stripe
+- Use Checkout Sessions (simplest)
+- Webhook for credit provisioning
+- Test mode during development
+
+### Resend
+- Simple REST API
+- HTML email templates
+- Basic is fine
+
+---
+
+## BOLT DATABASE SCHEMA
+
+### Essential Tables
+
+**users** - Handled by Bolt Auth
+
+**credits**:
+id, user_id, balance, created_at, updated_at
+
+text
+
+**credit_transactions**:
+id, user_id, amount, operation_type, description, created_at
+
+text
+
+**sessions**:
+id, user_id, agent_persona, start_time, end_time, credits_used
+
+text
+
+**agent_configs**:
+id, user_id, agent_persona, config_json, created_at, updated_at
+
+text
+
+**RLS Policies**:
+- Users can only access their own data
+- Filter all queries by `user_id = auth.uid()`
+
+---
+
+## IMPLEMENTATION GUIDELINES
+
+### When Starting a Phase
+
+1. Read the phase objectives
+2. Review success criteria
+3. Implement features one at a time
+4. Test each feature before moving on
+5. Document what you built
+6. Request approval to proceed
+
+### Code Quality Standards
+
+- TypeScript strict mode
+- Proper error handling
+- Clean, readable code
+- Comments for complex logic
+- No `any` types without reason
+
+### Testing Standards
+
+- Test happy path
+- Test basic error cases
+- Don't over-test
+- Manual testing is fine
+- Document test results
+
+### Documentation Standards
+
+- Update code comments
+- Note any deviations from plan
+- Document decisions made
+- Keep it brief
+
+---
+
+## COMMON PATTERNS
+
+### Backend Route Pattern
+// /api/some-service/action
+export async function POST(req: Request) {
+// 1. Verify auth
+const user = await auth.getUser(req);
+if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+// 2. Validate input
+const body = await req.json();
+// ... validation
+
+// 3. Execute logic
+const result = await doSomething(body);
+
+// 4. Return response
+return Response.json({ data: result });
+}
+
+text
+
+### Database Query Pattern
+// Query with RLS
+const { data, error } = await supabase
+.from('table_name')
+.select('*')
+.eq('user_id', userId);
+
+// Insert with RLS
+const { data, error } = await supabase
+.from('table_name')
+.insert({ user_id: userId, ...otherData });
+
+text
+
+### Error Handling Pattern
+try {
+const result = await riskyOperation();
+return result;
+} catch (error) {
+console.error('Operation failed:', error);
+// Return user-friendly error
+throw new Error('Something went wrong. Please try again.');
+}
+
+text
+
+---
+
+## WHEN TO ASK FOR HELP
+
+Ask if you encounter:
+- Ambiguous requirements
+- Technical limitations of Bolt platform
+- Conflicting instructions
+- Need to deviate from plan
+- Stuck on implementation
+- Testing failures
+
+Don't ask about:
+- Standard coding decisions
+- Routine implementation
+- Typical debugging
+- Minor code style choices
+
+---
+
+## PHASE COMPLETION CHECKLIST
+
+Before claiming phase complete:
+- ✅ All features implemented
+- ✅ Basic testing done
+- ✅ No critical errors
+- ✅ Code committed
+- ✅ Brief summary written
+- ✅ Ready to demo
+
+---
+
+## SUCCESS MANTRAS
+
+1. **Functional > Perfect**
+2. **Ship fast, iterate**
+3. **Good enough is good enough**
+4. **Simple beats complex**
+5. **Test the essentials**
+6. **Document the critical stuff**
+7. **Ask when stuck**
+8. **One phase at a time**
+
+---
+
+**You've got this! Build something great! 🚀**
+
+---
+
+**END OF SYSTEM INSTRUCTIONS**
